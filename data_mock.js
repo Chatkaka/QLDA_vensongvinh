@@ -255,8 +255,7 @@ const INITIAL_DATA = {
   so01: [
     {
       stt: 1,
-      maBsc: "CT-01",
-      hangMuc: "Thi công cọc nhồi và tường vây",
+      packageId: 1,
       loaiHoSo: "Lệnh khởi công",
       tenSpham: "Lệnh khởi công số 01/LK-VSV",
       linkLuuTru: "https://drive.google.com/file/d/1lk-vsv01/view",
@@ -267,8 +266,7 @@ const INITIAL_DATA = {
     },
     {
       stt: 2,
-      maBsc: "CT-01",
-      hangMuc: "Thi công cọc nhồi và tường vây",
+      packageId: 1,
       loaiHoSo: "Biên bản bàn giao mặt bằng",
       tenSpham: "Biên bản bàn giao mặt bằng mốc định vị móng",
       linkLuuTru: "https://drive.google.com/file/d/1bbbg-vsv01/view",
@@ -279,8 +277,7 @@ const INITIAL_DATA = {
     },
     {
       stt: 3,
-      maBsc: "CT-02",
-      hangMuc: "Cung cấp và lắp đặt hệ thống Trạm biến áp",
+      packageId: 2,
       loaiHoSo: "Hồ sơ năng lực nhà thầu",
       tenSpham: "Hồ sơ năng lực Nhà thầu Cơ điện M&E Việt Nam",
       linkLuuTru: "https://drive.google.com/file/d/1hsnl-mevn/view",
@@ -291,8 +288,7 @@ const INITIAL_DATA = {
     },
     {
       stt: 4,
-      maBsc: "CT-05",
-      hangMuc: "Thi công đường nội bộ và hạ tầng cảnh quan",
+      packageId: 5,
       loaiHoSo: "Bảo hiểm",
       tenSpham: "Đơn bảo hiểm công trình số BH-2026-CT05",
       linkLuuTru: "https://drive.google.com/file/d/1bh-ct05/view",
@@ -303,8 +299,7 @@ const INITIAL_DATA = {
     },
     {
       stt: 5,
-      maBsc: "CT-04",
-      hangMuc: "Cung cấp và lắp đặt hệ thống Điều hòa thông gió Chiller",
+      packageId: 4,
       loaiHoSo: "Bảo lãnh",
       tenSpham: "Thư bảo lãnh thực hiện hợp đồng Ngân hàng BIDV",
       linkLuuTru: "https://drive.google.com/file/d/1bl-bidv-ct04/view",
@@ -317,8 +312,7 @@ const INITIAL_DATA = {
   so02: [
     {
       stt: 1,
-      maBsc: "CT-01",
-      hangMuc: "Thi công cọc nhồi và tường vây",
+      packageId: 1,
       thang: "Tháng 06/2026",
       loaiTaiLieu: "Kế hoạch tổng thể",
       noiDungChinh: "Kế hoạch tổng thể biện pháp thi công tường vây sâu 24m quanh hố đào",
@@ -332,8 +326,7 @@ const INITIAL_DATA = {
     },
     {
       stt: 2,
-      maBsc: "CT-01",
-      hangMuc: "Thi công cọc nhồi và tường vây",
+      packageId: 1,
       thang: "Tháng 06/2026",
       loaiTaiLieu: "Biện pháp thi công",
       noiDungChinh: "Biện pháp gia cố đất nền xung quanh hầm tự hoại",
@@ -347,8 +340,7 @@ const INITIAL_DATA = {
     },
     {
       stt: 3,
-      maBsc: "CT-02",
-      hangMuc: "Cung cấp và lắp đặt hệ thống Trạm biến áp",
+      packageId: 2,
       thang: "Tháng 06/2026",
       loaiTaiLieu: "Tiến độ chi tiết",
       noiDungChinh: "Tiến độ chi tiết chế tạo, thử nghiệm vỏ tủ trạm kiosk 1000kVA",
@@ -362,8 +354,7 @@ const INITIAL_DATA = {
     },
     {
       stt: 4,
-      maBsc: "CT-05",
-      hangMuc: "Thi công đường nội bộ và hạ tầng cảnh quan",
+      packageId: 5,
       thang: "Tháng 06/2026",
       loaiTaiLieu: "Kế hoạch tổng thể",
       noiDungChinh: "Kế hoạch thảm bê tông nhựa mặt đường nội bộ chính phân khu sảnh",
@@ -379,8 +370,7 @@ const INITIAL_DATA = {
   so03: [
     {
       maPs: "PS-001",
-      maBsc: "CT-01",
-      hangMuc: "Thi công cọc nhồi và tường vây",
+      packageId: 1,
       ngayPs: "2026-02-15",
       loai: "Thay đổi thiết kế",
       moTa: "Thay đổi chiều sâu ngàm tường vây từ 22m xuống 24m do gặp lớp cát chảy",
@@ -396,12 +386,11 @@ const INITIAL_DATA = {
     },
     {
       maPs: "PS-002",
-      maBsc: "CT-01",
-      hangMuc: "Thi công cọc nhồi và tường vây",
+      packageId: 1,
       ngayPs: "2026-05-10",
       loai: "Tăng khối lượng",
       moTa: "Bổ sung thép đai gia cường cọc khoan nhồi D1200",
-      nguyenNhan: "Yêu cầu tăng khả năng chịu cắt khi có tải động lớn bên trên",
+      nguyenNhan: "Yêu cầu tăng khả năng chịu lực tối ưu khi có tải động lớn bên trên",
       deXuat: "Bổ sung đai xoắn D12 khoảng cách a100 thay vì a150",
       giaTri: 0.8,
       anhHuongTd: 2,
@@ -413,8 +402,7 @@ const INITIAL_DATA = {
     },
     {
       maPs: "PS-003",
-      maBsc: "CT-02",
-      hangMuc: "Cung cấp và lắp đặt hệ thống Trạm biến áp",
+      packageId: 2,
       ngayPs: "2026-06-12",
       loai: "Phát sinh ngoài hợp đồng",
       moTa: "Bổ sung hệ thống chống sét trực tiếp bằng kim thu lôi ESE bảo vệ Trạm biến áp ngoài trời",
@@ -432,8 +420,7 @@ const INITIAL_DATA = {
   so04: [
     {
       maYc: "YC-001",
-      maBsc: "CT-01",
-      hangMuc: "Thi công cọc nhồi và tường vây",
+      packageId: 1,
       ngayYc: "2026-02-01",
       loaiYc: "Vật tư đặc thù",
       vatTu: "Bột sét siêu mịn Bentonite API của Ấn Độ",
@@ -449,8 +436,7 @@ const INITIAL_DATA = {
     },
     {
       maYc: "YC-002",
-      maBsc: "CT-02",
-      hangMuc: "Cung cấp và lắp đặt hệ thống Trạm biến áp",
+      packageId: 2,
       ngayYc: "2026-06-05",
       loaiYc: "Thiết bị thuê ngoài",
       vatTu: "Xe cẩu siêu trường siêu trọng 250 Tấn",
@@ -466,8 +452,7 @@ const INITIAL_DATA = {
     },
     {
       maYc: "YC-003",
-      maBsc: "CT-04",
-      hangMuc: "Cung cấp và lắp đặt hệ thống Điều hòa thông gió Chiller",
+      packageId: 4,
       ngayYc: "2026-06-20",
       loaiYc: "Biện pháp đặc biệt",
       vatTu: "Giàn treo cẩu lắp mặt dựng Chiller tầng mái",
@@ -485,8 +470,7 @@ const INITIAL_DATA = {
   so05: [
     {
       stt: 1,
-      maBsc: "CT-02",
-      hangMuc: "Cung cấp và lắp đặt hệ thống Trạm biến áp",
+      packageId: 2,
       ngayPhatHien: "2026-05-15",
       mucCham: 12,
       nguyenNhan: "Chậm tiến độ giao hàng tủ điện hạ thế tổng do tắc biên đường bộ nhập khẩu linh kiện",
@@ -500,8 +484,7 @@ const INITIAL_DATA = {
     },
     {
       stt: 2,
-      maBsc: "CT-05",
-      hangMuc: "Thi công đường nội bộ và hạ tầng cảnh quan",
+      packageId: 5,
       ngayPhatHien: "2026-05-02",
       mucCham: 8,
       nguyenNhan: "Vướng mặt bằng đổ thải đá dăm làm chậm khâu san lấp mặt bằng",

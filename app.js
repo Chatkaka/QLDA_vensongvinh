@@ -909,10 +909,16 @@ function renderSo01Table() {
   tbody.innerHTML = "";
   
   const filtered = state.so01.filter(r => {
+    const pkg = state.master.find(p => p.tt === r.packageId) || {};
+    const bscCode = pkg.maBsc || "";
+    const packageName = pkg.hangMuc || "";
+    
     const searchMatch = !searchVal ||
                         (r.tenSpham && r.tenSpham.toLowerCase().includes(searchVal)) ||
-                        (r.loaiHoSo && r.loaiHoSo.toLowerCase().includes(searchVal));
-    const bscMatch = !filterBsc || r.maBsc === filterBsc;
+                        (r.loaiHoSo && r.loaiHoSo.toLowerCase().includes(searchVal)) ||
+                        (packageName.toLowerCase().includes(searchVal)) ||
+                        (bscCode.toLowerCase().includes(searchVal));
+    const bscMatch = !filterBsc || bscCode === filterBsc;
     const statusMatch = !filterStatus || r.ttDuyet === filterStatus;
     
     return searchMatch && bscMatch && statusMatch;
@@ -930,6 +936,10 @@ function renderSo01Table() {
   }
   
   filtered.forEach((r, idx) => {
+    const pkg = state.master.find(p => p.tt === r.packageId) || {};
+    const bscCode = pkg.maBsc || "";
+    const packageName = pkg.hangMuc || "";
+    
     let statusClass = "badge-muted";
     if (r.ttDuyet === "Đã duyệt") statusClass = "badge-success";
     else if (r.ttDuyet === "Đang trình duyệt") statusClass = "badge-info";
@@ -938,8 +948,8 @@ function renderSo01Table() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${idx + 1}</td>
-      <td style="font-weight: 700; color: var(--primary);">${r.maBsc}</td>
-      <td style="font-weight: 500;">${r.hangMuc}</td>
+      <td style="font-weight: 700; color: var(--primary);">${bscCode}</td>
+      <td style="font-weight: 500;">${packageName}</td>
       <td><strong>${r.loaiHoSo}</strong></td>
       <td>${r.tenSpham}</td>
       <td><a href="${r.linkLuuTru}" target="_blank" title="Mở đường dẫn"><i class="fa-solid fa-arrow-up-right-from-square"></i> Tài liệu</a></td>
@@ -969,8 +979,15 @@ function renderSo02Table() {
   tbody.innerHTML = "";
   
   const filtered = state.so02.filter(r => {
-    const searchMatch = !searchVal || (r.noiDungChinh && r.noiDungChinh.toLowerCase().includes(searchVal));
-    const bscMatch = !filterBsc || r.maBsc === filterBsc;
+    const pkg = state.master.find(p => p.tt === r.packageId) || {};
+    const bscCode = pkg.maBsc || "";
+    const packageName = pkg.hangMuc || "";
+    
+    const searchMatch = !searchVal || 
+                        (r.noiDungChinh && r.noiDungChinh.toLowerCase().includes(searchVal)) ||
+                        (packageName.toLowerCase().includes(searchVal)) ||
+                        (bscCode.toLowerCase().includes(searchVal));
+    const bscMatch = !filterBsc || bscCode === filterBsc;
     const ycktMatch = !filterYckt || r.datYckt === filterYckt;
     const statusMatch = !filterStatus || r.ttDuyet === filterStatus;
     
@@ -989,6 +1006,10 @@ function renderSo02Table() {
   }
   
   filtered.forEach((r, idx) => {
+    const pkg = state.master.find(p => p.tt === r.packageId) || {};
+    const bscCode = pkg.maBsc || "";
+    const packageName = pkg.hangMuc || "";
+    
     let statusClass = "badge-muted";
     if (r.ttDuyet === "Đã duyệt") statusClass = "badge-success";
     else if (r.ttDuyet === "Chờ duyệt") statusClass = "badge-warning";
@@ -997,8 +1018,8 @@ function renderSo02Table() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${idx + 1}</td>
-      <td style="font-weight: 700; color: var(--primary);">${r.maBsc}</td>
-      <td style="font-weight: 500;">${r.hangMuc}</td>
+      <td style="font-weight: 700; color: var(--primary);">${bscCode}</td>
+      <td style="font-weight: 500;">${packageName}</td>
       <td><strong>${r.thang}</strong></td>
       <td>${r.loaiTaiLieu}</td>
       <td title="${r.noiDungChinh}">${r.noiDungChinh}</td>
@@ -1031,11 +1052,17 @@ function renderSo03Table() {
   tbody.innerHTML = "";
   
   const filtered = state.so03.filter(r => {
+    const pkg = state.master.find(p => p.tt === r.packageId) || {};
+    const bscCode = pkg.maBsc || "";
+    const packageName = pkg.hangMuc || "";
+    
     const searchMatch = !searchVal || 
                         (r.moTa && r.moTa.toLowerCase().includes(searchVal)) ||
                         (r.nguyenNhan && r.nguyenNhan.toLowerCase().includes(searchVal)) ||
-                        (r.maPs && r.maPs.toLowerCase().includes(searchVal));
-    const bscMatch = !filterBsc || r.maBsc === filterBsc;
+                        (r.maPs && r.maPs.toLowerCase().includes(searchVal)) ||
+                        (packageName.toLowerCase().includes(searchVal)) ||
+                        (bscCode.toLowerCase().includes(searchVal));
+    const bscMatch = !filterBsc || bscCode === filterBsc;
     const loaiMatch = !filterLoai || r.loai === filterLoai;
     const statusMatch = !filterStatus || r.ttDuyet === filterStatus;
     
@@ -1054,6 +1081,10 @@ function renderSo03Table() {
   }
   
   filtered.forEach((r, idx) => {
+    const pkg = state.master.find(p => p.tt === r.packageId) || {};
+    const bscCode = pkg.maBsc || "";
+    const packageName = pkg.hangMuc || "";
+    
     let statusClass = "badge-muted";
     if (r.ttDuyet === "Đã duyệt") statusClass = "badge-success";
     else if (r.ttDuyet === "Chờ duyệt") statusClass = "badge-warning";
@@ -1062,8 +1093,8 @@ function renderSo03Table() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td style="font-weight: 700; color: var(--warning);">${r.maPs}</td>
-      <td style="font-weight: 700; color: var(--primary);">${r.maBsc}</td>
-      <td style="font-weight: 500;">${r.hangMuc}</td>
+      <td style="font-weight: 700; color: var(--primary);">${bscCode}</td>
+      <td style="font-weight: 500;">${packageName}</td>
       <td>${formatDate(r.ngayPs)}</td>
       <td><strong>${r.loai}</strong></td>
       <td style="font-weight: 700; color: var(--danger);">${r.giaTri ? r.giaTri.toFixed(3) : '0.000'}</td>
@@ -1098,11 +1129,17 @@ function renderSo04Table() {
   tbody.innerHTML = "";
   
   const filtered = state.so04.filter(r => {
+    const pkg = state.master.find(p => p.tt === r.packageId) || {};
+    const bscCode = pkg.maBsc || "";
+    const packageName = pkg.hangMuc || "";
+    
     const searchMatch = !searchVal || 
                         (r.vatTu && r.vatTu.toLowerCase().includes(searchVal)) ||
                         (r.dacTa && r.dacTa.toLowerCase().includes(searchVal)) ||
-                        (r.maYc && r.maYc.toLowerCase().includes(searchVal));
-    const bscMatch = !filterBsc || r.maBsc === filterBsc;
+                        (r.maYc && r.maYc.toLowerCase().includes(searchVal)) ||
+                        (packageName.toLowerCase().includes(searchVal)) ||
+                        (bscCode.toLowerCase().includes(searchVal));
+    const bscMatch = !filterBsc || bscCode === filterBsc;
     const loaiMatch = !filterLoai || r.loaiYc === filterLoai;
     const statusMatch = !filterStatus || r.ttDuyet === filterStatus;
     
@@ -1121,6 +1158,10 @@ function renderSo04Table() {
   }
   
   filtered.forEach((r, idx) => {
+    const pkg = state.master.find(p => p.tt === r.packageId) || {};
+    const bscCode = pkg.maBsc || "";
+    const packageName = pkg.hangMuc || "";
+    
     let statusClass = "badge-muted";
     if (r.ttDuyet === "Đã duyệt") statusClass = "badge-success";
     else if (r.ttDuyet === "Chờ duyệt") statusClass = "badge-warning";
@@ -1134,8 +1175,8 @@ function renderSo04Table() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td style="font-weight: 700; color: var(--primary);">${r.maYc}</td>
-      <td style="font-weight: 700; color: var(--primary);">${r.maBsc}</td>
-      <td style="font-weight: 500;">${r.hangMuc}</td>
+      <td style="font-weight: 700; color: var(--primary);">${bscCode}</td>
+      <td style="font-weight: 500;">${packageName}</td>
       <td>${formatDate(r.ngayYc)}</td>
       <td><strong>${r.loaiYc}</strong></td>
       <td><strong>${r.vatTu}</strong></td>
@@ -1169,11 +1210,17 @@ function renderSo05Table() {
   tbody.innerHTML = "";
   
   const filtered = state.so05.filter(r => {
+    const pkg = state.master.find(p => p.tt === r.packageId) || {};
+    const bscCode = pkg.maBsc || "";
+    const packageName = pkg.hangMuc || "";
+    
     const searchMatch = !searchVal || 
                         (r.nguyenNhan && r.nguyenNhan.toLowerCase().includes(searchVal)) ||
                         (r.giaiPhapBu && r.giaiPhapBu.toLowerCase().includes(searchVal)) ||
-                        (r.chiTietGiaiPhap && r.chiTietGiaiPhap.toLowerCase().includes(searchVal));
-    const bscMatch = !filterBsc || r.maBsc === filterBsc;
+                        (r.chiTietGiaiPhap && r.chiTietGiaiPhap.toLowerCase().includes(searchVal)) ||
+                        (packageName.toLowerCase().includes(searchVal)) ||
+                        (bscCode.toLowerCase().includes(searchVal));
+    const bscMatch = !filterBsc || bscCode === filterBsc;
     const statusMatch = !filterStatus || r.ttThucHien === filterStatus;
     
     return searchMatch && bscMatch && statusMatch;
@@ -1191,6 +1238,10 @@ function renderSo05Table() {
   }
   
   filtered.forEach((r, idx) => {
+    const pkg = state.master.find(p => p.tt === r.packageId) || {};
+    const bscCode = pkg.maBsc || "";
+    const packageName = pkg.hangMuc || "";
+    
     let actionClass = "badge-muted";
     if (r.ttThucHien === "Đã bắt kịp tiến độ") actionClass = "badge-success";
     else if (r.ttThucHien === "Đang triển khai bù") actionClass = "badge-info";
@@ -1199,8 +1250,8 @@ function renderSo05Table() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${idx + 1}</td>
-      <td style="font-weight: 700; color: var(--primary);">${r.maBsc}</td>
-      <td style="font-weight: 500;">${r.hangMuc}</td>
+      <td style="font-weight: 700; color: var(--primary);">${bscCode}</td>
+      <td style="font-weight: 500;">${packageName}</td>
       <td>${formatDate(r.ngayPhatHien)}</td>
       <td style="font-weight: 700; color: var(--danger); text-align: center;">${r.mucCham} ngày</td>
       <td><strong>${formatDate(r.mocCamKet)}</strong></td>
@@ -1472,10 +1523,10 @@ function saveSo01Form(e) {
   
   const idxVal = document.getElementById("so01Index").value;
   const maBsc = document.getElementById("so01MaBsc").value;
+  const pkg = state.master.find(m => m.maBsc === maBsc) || {};
   
   const data = {
-    maBsc: maBsc,
-    hangMuc: getHangMucByMaBsc(maBsc),
+    packageId: pkg.tt || null,
     loaiHoSo: document.getElementById("so01LoaiHoSo").value,
     tenSpham: document.getElementById("so01TenSpham").value.trim(),
     linkLuuTru: document.getElementById("so01LinkLuuTru").value.trim(),
@@ -1500,10 +1551,11 @@ window.editSo01Row = function(index) {
   const r = state.so01[index];
   if (!r) return;
   
-  populateBscDropdown("so01MaBsc", r.maBsc);
+  const pkg = state.master.find(p => p.tt === r.packageId) || {};
+  populateBscDropdown("so01MaBsc", pkg.maBsc || "");
   
   document.getElementById("so01Index").value = index;
-  document.getElementById("so01HangMuc").value = r.hangMuc;
+  document.getElementById("so01HangMuc").value = pkg.hangMuc || "";
   document.getElementById("so01LoaiHoSo").value = r.loaiHoSo;
   document.getElementById("so01TenSpham").value = r.tenSpham;
   document.getElementById("so01LinkLuuTru").value = r.linkLuuTru;
@@ -1534,10 +1586,10 @@ function saveSo02Form(e) {
   
   const idxVal = document.getElementById("so02Index").value;
   const maBsc = document.getElementById("so02MaBsc").value;
+  const pkg = state.master.find(m => m.maBsc === maBsc) || {};
   
   const data = {
-    maBsc: maBsc,
-    hangMuc: getHangMucByMaBsc(maBsc),
+    packageId: pkg.tt || null,
     thang: document.getElementById("so02Thang").value.trim(),
     loaiTaiLieu: document.getElementById("so02LoaiTaiLieu").value,
     noiDungChinh: document.getElementById("so02NoiDungChinh").value.trim(),
@@ -1565,10 +1617,11 @@ window.editSo02Row = function(index) {
   const r = state.so02[index];
   if (!r) return;
   
-  populateBscDropdown("so02MaBsc", r.maBsc);
+  const pkg = state.master.find(p => p.tt === r.packageId) || {};
+  populateBscDropdown("so02MaBsc", pkg.maBsc || "");
   
   document.getElementById("so02Index").value = index;
-  document.getElementById("so02HangMuc").value = r.hangMuc;
+  document.getElementById("so02HangMuc").value = pkg.hangMuc || "";
   document.getElementById("so02Thang").value = r.thang;
   document.getElementById("so02LoaiTaiLieu").value = r.loaiTaiLieu;
   document.getElementById("so02NoiDungChinh").value = r.noiDungChinh;
@@ -1602,11 +1655,11 @@ function saveSo03Form(e) {
   
   const idxVal = document.getElementById("so03Index").value;
   const maBsc = document.getElementById("so03MaBsc").value;
+  const pkg = state.master.find(m => m.maBsc === maBsc) || {};
   
   const data = {
     maPs: document.getElementById("so03MaPs").value,
-    maBsc: maBsc,
-    hangMuc: getHangMucByMaBsc(maBsc),
+    packageId: pkg.tt || null,
     ngayPs: document.getElementById("so03NgayPs").value,
     loai: document.getElementById("so03Loai").value,
     giaTri: parseFloat(document.getElementById("so03GiaTri").value) || 0,
@@ -1636,11 +1689,12 @@ window.editSo03Row = function(index) {
   const r = state.so03[index];
   if (!r) return;
   
-  populateBscDropdown("so03MaBsc", r.maBsc);
+  const pkg = state.master.find(p => p.tt === r.packageId) || {};
+  populateBscDropdown("so03MaBsc", pkg.maBsc || "");
   
   document.getElementById("so03Index").value = index;
   document.getElementById("so03MaPs").value = r.maPs;
-  document.getElementById("so03HangMuc").value = r.hangMuc;
+  document.getElementById("so03HangMuc").value = pkg.hangMuc || "";
   document.getElementById("so03NgayPs").value = r.ngayPs;
   document.getElementById("so03Loai").value = r.loai;
   document.getElementById("so03GiaTri").value = r.giaTri;
@@ -1676,11 +1730,11 @@ function saveSo04Form(e) {
   
   const idxVal = document.getElementById("so04Index").value;
   const maBsc = document.getElementById("so04MaBsc").value;
+  const pkg = state.master.find(m => m.maBsc === maBsc) || {};
   
   const data = {
     maYc: document.getElementById("so04MaYc").value,
-    maBsc: maBsc,
-    hangMuc: getHangMucByMaBsc(maBsc),
+    packageId: pkg.tt || null,
     ngayYc: document.getElementById("so04NgayYc").value,
     loaiYc: document.getElementById("so04LoaiYc").value,
     vatTu: document.getElementById("so04VatTu").value.trim(),
@@ -1710,11 +1764,12 @@ window.editSo04Row = function(index) {
   const r = state.so04[index];
   if (!r) return;
   
-  populateBscDropdown("so04MaBsc", r.maBsc);
+  const pkg = state.master.find(p => p.tt === r.packageId) || {};
+  populateBscDropdown("so04MaBsc", pkg.maBsc || "");
   
   document.getElementById("so04Index").value = index;
   document.getElementById("so04MaYc").value = r.maYc;
-  document.getElementById("so04HangMuc").value = r.hangMuc;
+  document.getElementById("so04HangMuc").value = pkg.hangMuc || "";
   document.getElementById("so04NgayYc").value = r.ngayYc;
   document.getElementById("so04LoaiYc").value = r.loaiYc;
   document.getElementById("so04VatTu").value = r.vatTu;
@@ -1739,13 +1794,74 @@ window.deleteSo04Row = function(index) {
   }
 };
 
-// 7.6. SỔ 05 - BÙ TIẾN ĐỘ THI CÔNG
+// 7.6. SỔ 05 - BÙ TIỀN ĐỘ THI CÔNG
 function saveSo05Form(e) {
   e.preventDefault();
   const form = document.getElementById("formSo05");
   if (!form.checkValidity()) {
     form.reportValidity();
     return;
+  }
+  
+  const idxVal = document.getElementById("so05Index").value;
+  const maBsc = document.getElementById("so05MaBsc").value;
+  const pkg = state.master.find(m => m.maBsc === maBsc) || {};
+  
+  const data = {
+    packageId: pkg.tt || null,
+    ngayPhatHien: document.getElementById("so05NgayPhatHien").value,
+    mucCham: parseInt(document.getElementById("so05MucCham").value) || 0,
+    nguyenNhan: document.getElementById("so05NguyenNhan").value.trim(),
+    giaiPhapBu: document.getElementById("so05GiaiPhapBu").value.trim(),
+    chiTietGiaiPhap: document.getElementById("so05ChiTietGiaiPhap").value.trim(),
+    mocCamKet: document.getElementById("so05MocCamKet").value,
+    linkPhuongAn: document.getElementById("so05LinkPhuongAn").value.trim(),
+    ttDuyet: document.getElementById("so05TtDuyet").value,
+    kqThucHienBu: document.getElementById("so05KqThucHienBu").value.trim(),
+    ttThucHien: document.getElementById("so05TtThucHien").value
+  };
+  
+  if (idxVal === "") {
+    state.so05.push(data);
+  } else {
+    const index = parseInt(idxVal);
+    state.so05[index] = data;
+  }
+  
+  closeModal("modalSo05");
+  saveStateToStorage(true);
+}
+
+window.editSo05Row = function(index) {
+  const r = state.so05[index];
+  if (!r) return;
+  
+  const pkg = state.master.find(p => p.tt === r.packageId) || {};
+  populateBscDropdown("so05MaBsc", pkg.maBsc || "");
+  
+  document.getElementById("so05Index").value = index;
+  document.getElementById("so05HangMuc").value = pkg.hangMuc || "";
+  document.getElementById("so05NgayPhatHien").value = r.ngayPhatHien;
+  document.getElementById("so05MucCham").value = r.mucCham;
+  document.getElementById("so05NguyenNhan").value = r.nguyenNhan;
+  document.getElementById("so05GiaiPhapBu").value = r.giaiPhapBu;
+  document.getElementById("so05ChiTietGiaiPhap").value = r.chiTietGiaiPhap;
+  document.getElementById("so05MocCamKet").value = r.mocCamKet;
+  document.getElementById("so05LinkPhuongAn").value = r.linkPhuongAn;
+  document.getElementById("so05TtDuyet").value = r.ttDuyet;
+  document.getElementById("so05KqThucHienBu").value = r.kqThucHienBu || "";
+  document.getElementById("so05TtThucHien").value = r.ttThucHien;
+  
+  document.getElementById("modalSo05Title").textContent = "Cập nhật Bù Tiến Độ";
+  openModal("modalSo05");
+};
+
+window.deleteSo05Row = function(index) {
+  if (confirm("Bạn có chắc chắn muốn xóa bản ghi bù tiến độ này không?")) {
+    state.so05.splice(index, 1);
+    saveStateToStorage(true);
+  }
+};;
   }
   
   const idxVal = document.getElementById("so05Index").value;
@@ -2275,6 +2391,7 @@ YÊU CẦU:
 // ==========================================
 
 // Xuất toàn bộ cơ sở dữ liệu (6 Sheets) sang file Excel
+// Xuất toàn bộ cơ sở dữ liệu (6 Sheets) sang file Excel
 function exportToExcel() {
   if (typeof XLSX === "undefined") {
     alert("Thư viện SheetJS chưa được tải thành công. Vui lòng kiểm tra lại kết nối mạng!");
@@ -2321,13 +2438,25 @@ function exportToExcel() {
   const wsMaster = XLSX.utils.json_to_sheet(masterData);
   XLSX.utils.book_append_sheet(wb, wsMaster, "MASTER_DATA");
 
+  // Helper function to dynamically JOIN master bsc/hangMuc for export
+  const joinMasterInfo = (array) => {
+    return array.map(item => {
+      const pkg = state.master.find(p => p.tt === item.packageId) || {};
+      return {
+        ...item,
+        maBsc: pkg.maBsc || "",
+        hangMuc: pkg.hangMuc || ""
+      };
+    });
+  };
+
   // 2. SO_01 mapping
   const so01Map = {
     stt: "STT", maBsc: "Mã BSC", hangMuc: "Hạng mục", loaiHoSo: "Loại hồ sơ",
     tenSpham: "Tên sản phẩm / Số hiệu", linkLuuTru: "LINK lưu trữ", ngayHt: "Ngày HT",
     nguoiLap: "Người lập", nguoiDuyet: "Người duyệt", ttDuyet: "TT duyệt"
   };
-  const so01Data = mapData(state.so01, so01Map);
+  const so01Data = mapData(joinMasterInfo(state.so01), so01Map);
   const wsSo01 = XLSX.utils.json_to_sheet(so01Data);
   XLSX.utils.book_append_sheet(wb, wsSo01, "SO_01_TIEN_KHOI_CONG");
 
@@ -2338,7 +2467,7 @@ function exportToExcel() {
     linkTaiLieu: "LINK tài liệu", ttLap: "TT lập", ttDuyet: "TT duyệt",
     nguoiLap: "Người lập", nguoiDuyet: "Người duyệt", ngayDuyet: "Ngày duyệt"
   };
-  const so02Data = mapData(state.so02, so02Map);
+  const so02Data = mapData(joinMasterInfo(state.so02), so02Map);
   const wsSo02 = XLSX.utils.json_to_sheet(so02Data);
   XLSX.utils.book_append_sheet(wb, wsSo02, "SO_02_KE_HOACH");
 
@@ -2350,7 +2479,7 @@ function exportToExcel() {
     ttDuyet: "TT duyệt", nguoiDuyet: "Người duyệt", ngayDuyet: "Ngày duyệt",
     noiDungDieuChinh: "Nội dung điều chỉnh (KH→KQ)"
   };
-  const so03Data = mapData(state.so03, so03Map);
+  const so03Data = mapData(joinMasterInfo(state.so03), so03Map);
   const wsSo03 = XLSX.utils.json_to_sheet(so03Data);
   XLSX.utils.book_append_sheet(wb, wsSo03, "SO_03_PHAT_SINH");
 
@@ -2361,7 +2490,7 @@ function exportToExcel() {
     kl: "KL", dvt: "ĐVT", giaTri: "Giá trị (tỷ)", trongNgoaiHd: "Trong/Ngoài HĐCU",
     linkHoSo: "LINK hồ sơ", ttDuyet: "TT duyệt", ngayCan: "Ngày cần", ttCungUng: "TT cung ứng"
   };
-  const so04Data = mapData(state.so04, so04Map);
+  const so04Data = mapData(joinMasterInfo(state.so04), so04Map);
   const wsSo04 = XLSX.utils.json_to_sheet(so04Data);
   XLSX.utils.book_append_sheet(wb, wsSo04, "SO_04_CUNG_UNG");
 
@@ -2372,7 +2501,7 @@ function exportToExcel() {
     chiTietGiaiPhap: "Chi tiết giải pháp", mocCamKet: "Mốc cam kết HT", linkPhuongAn: "LINK phương án",
     ttDuyet: "TT duyệt", kqThucHienBu: "KQ thực hiện bù", ttThucHien: "TT thực hiện"
   };
-  const so05Data = mapData(state.so05, so05Map);
+  const so05Data = mapData(joinMasterInfo(state.so05), so05Map);
   const wsSo05 = XLSX.utils.json_to_sheet(so05Data);
   XLSX.utils.book_append_sheet(wb, wsSo05, "SO_05_BU_TIEN_DO");
 
@@ -2380,7 +2509,6 @@ function exportToExcel() {
   XLSX.writeFile(wb, `Ke_hoach_VSV_Tender_Data_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
-// Nhập toàn bộ cơ sở dữ liệu từ file Excel
 // Nhập toàn bộ cơ sở dữ liệu từ file Excel
 function importFromExcel(e) {
   if (typeof XLSX === "undefined") {
@@ -2461,7 +2589,7 @@ function importFromExcel(e) {
           if (!row || row.length < 5) continue;
           if (!row[0] && !row[4]) continue;
           
-          let tt = cleanStr(row[0]);
+          let tt = cleanInt(row[0]);
           let maBsc = cleanStr(row[1]);
           let goiThauPl = cleanStr(row[2]);
           
@@ -2526,6 +2654,12 @@ function importFromExcel(e) {
         }
       }
 
+      // Helper function to resolve packageId from Ma_BSC
+      const getPackageIdByBsc = (bsc) => {
+        const p = newState.master.find(m => m.maBsc === bsc);
+        return p ? p.tt : null;
+      };
+
       // 2. Đọc sheet SO_01_TIEN_KHOI_CONG hoặc 01_HSo TienKC
       let wsSo01 = workbook.Sheets["01_HSo TienKC"] || workbook.Sheets["SO_01_TIEN_KHOI_CONG"];
       if (wsSo01) {
@@ -2539,8 +2673,7 @@ function importFromExcel(e) {
           if (!row || row.length < 4 || !row[1]) continue;
           newState.so01.push({
             stt: cleanInt(row[0]),
-            maBsc: cleanStr(row[1]),
-            hangMuc: cleanStr(row[2]),
+            packageId: getPackageIdByBsc(cleanStr(row[1])),
             loaiHoSo: cleanStr(row[3]),
             tenSpham: cleanStr(row[4]),
             linkLuuTru: cleanStr(row[5]),
@@ -2565,8 +2698,7 @@ function importFromExcel(e) {
           if (!row || row.length < 5 || !row[1]) continue;
           newState.so02.push({
             stt: cleanInt(row[0]),
-            maBsc: cleanStr(row[1]),
-            hangMuc: cleanStr(row[2]),
+            packageId: getPackageIdByBsc(cleanStr(row[1])),
             thang: cleanStr(row[3]),
             loaiTaiLieu: cleanStr(row[4]),
             noiDungChinh: cleanStr(row[5]),
@@ -2595,8 +2727,7 @@ function importFromExcel(e) {
           newState.so03.push({
             maPs: cleanStr(row[0]),
             stt: cleanInt(row[1]),
-            maBsc: cleanStr(row[2]),
-            hangMuc: cleanStr(row[3]),
+            packageId: getPackageIdByBsc(cleanStr(row[2])),
             ngayPs: cleanDate(row[4]),
             loai: cleanStr(row[5]),
             moTa: cleanStr(row[6]),
@@ -2627,8 +2758,7 @@ function importFromExcel(e) {
           newState.so04.push({
             maYc: cleanStr(row[0]),
             stt: cleanInt(row[1]),
-            maBsc: cleanStr(row[2]),
-            hangMuc: cleanStr(row[3]),
+            packageId: getPackageIdByBsc(cleanStr(row[2])),
             ngayYc: cleanDate(row[4]),
             loaiYc: cleanStr(row[5]),
             vatTu: cleanStr(row[6]),
@@ -2658,8 +2788,7 @@ function importFromExcel(e) {
           if (!row || row.length < 4 || !row[1]) continue;
           newState.so05.push({
             stt: cleanInt(row[0]),
-            maBsc: cleanStr(row[1]),
-            hangMuc: cleanStr(row[2]),
+            packageId: getPackageIdByBsc(cleanStr(row[1])),
             ngayPhatHien: cleanDate(row[3]),
             mucCham: cleanInt(row[4]),
             nguyenNhan: cleanStr(row[5]),
@@ -2862,8 +2991,25 @@ ${JSON.stringify(systemSampleSchema, null, 2)}
 function applyAiImportData(isOverwrite) {
   if (!tempAiImportData) return;
 
+  // Helper function to resolve packageId and clean legacy fields
+  const resolvePackageIds = (targetData, masterList) => {
+    ['so01', 'so02', 'so03', 'so04', 'so05'].forEach(soKey => {
+      if (targetData[soKey]) {
+        targetData[soKey] = targetData[soKey].map(item => {
+          const bsc = item.maBsc || "";
+          const pkg = masterList.find(m => m.maBsc === bsc) || {};
+          const newItem = { ...item, packageId: pkg.tt || null };
+          delete newItem.maBsc;
+          delete newItem.hangMuc;
+          return newItem;
+        });
+      }
+    });
+  };
+
   if (isOverwrite) {
     // 1. GHI ĐÈ dữ liệu cũ
+    resolvePackageIds(tempAiImportData, tempAiImportData.master);
     state = tempAiImportData;
     alert("Đã ghi đè toàn bộ dữ liệu hệ thống bằng dữ liệu bóc tách của AI!");
   } else {
@@ -2871,7 +3017,7 @@ function applyAiImportData(isOverwrite) {
     // Lấy số thứ tự lớn nhất hiện tại để tiếp nối
     let maxMasterTt = state.master.reduce((max, r) => r.tt > max ? r.tt : max, 0);
     
-    // Gộp Master
+    // Gộp Master trước
     tempAiImportData.master.forEach(r => {
       // Tránh trùng Mã BSC
       const dup = state.master.find(m => m.maBsc === r.maBsc);
@@ -2882,6 +3028,9 @@ function applyAiImportData(isOverwrite) {
       r.tt = maxMasterTt;
       state.master.push(r);
     });
+
+    // Chuẩn hóa packageId của các sổ thầu phụ tempAiImportData sang danh sách master đã gộp
+    resolvePackageIds(tempAiImportData, state.master);
 
     // Gộp Sổ 01
     let maxSo01Stt = state.so01.reduce((max, r) => r.stt > max ? r.stt : max, 0);
