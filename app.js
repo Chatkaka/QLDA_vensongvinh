@@ -92,8 +92,10 @@ function recalculateAllFormulas() {
   if (!state.so05) state.so05 = [];
 
   state.master.forEach((row, idx) => {
-    // Tự động gán STT dựa trên thứ tự dòng
-    row.tt = idx + 1;
+    // Tự động gán STT dựa trên thứ tự dòng nếu chưa có
+    if (row.tt === undefined || row.tt === null || row.tt === "") {
+      row.tt = idx + 1;
+    }
     
     // Ràng buộc kiểu dữ liệu số
     const nganSach = parseFloat(row.nganSach) || 0;
@@ -667,6 +669,16 @@ function updateDashboard() {
 // 5. RENDER CÁC BẢNG DỮ LIỆU CHUYÊN BIỆT
 
 // 5.1. Render Bảng Master dữ liệu tổng hợp
+// Helper định dạng số an toàn tránh crash JS
+const formatNumberSafe = (val, decimals = 2, defaultVal = '0.00') => {
+  if (val === undefined || val === null || val === "" || String(val).toLowerCase() === "nan") {
+    return defaultVal;
+  }
+  const num = parseFloat(String(val).replace(/,/g, ''));
+  return isNaN(num) ? defaultVal : num.toFixed(decimals);
+};
+
+// 5.1. Render Bảng Master dữ liệu tổng hợp
 function renderMasterTable() {
   const searchVal = document.getElementById("masterSearchInput").value.toLowerCase().trim();
   const filterNhomCt = document.getElementById("masterFilterNhomCt").value;
@@ -676,14 +688,13 @@ function renderMasterTable() {
   const tbody = document.getElementById("masterTableBody");
   tbody.innerHTML = "";
   
-  const filtered = state.master.filter(r => {
-    // Bộ lọc Search
+  // 1. Lọc dữ liệu thô ban đầu
+  const filteredRaw = state.master.filter(r => {
     const searchMatch = !searchVal || 
                         (r.maBsc && r.maBsc.toLowerCase().includes(searchVal)) ||
                         (r.hangMuc && r.hangMuc.toLowerCase().includes(searchVal)) ||
                         (r.phuTrach && r.phuTrach.toLowerCase().includes(searchVal));
                         
-    // Bộ lọc Dropdowns
     const nhomCtMatch = !filterNhomCt || r.nhomCt === filterNhomCt;
     const goiThauMatch = !filterGoiThau || r.goiThauPl === filterGoiThau;
     const dkMatch = !filterDieuKien || r.dieuKienDu === filterDieuKien;
@@ -691,9 +702,55 @@ function renderMasterTable() {
     return searchMatch && nhomCtMatch && goiThauMatch && dkMatch;
   });
   
-  document.getElementById("masterTableCount").textContent = `Hiển thị: ${filtered.length} / ${state.master.length} gói thầu`;
+  // 2. Sắp xếp theo cấu trúc WBS phân cấp
+  const parseTT = (ttVal) => {
+    if (!ttVal) return [999999];
+    return String(ttVal).split(/[\.-]/).map(p => {
+      const num = parseFloat(p.trim());
+      return isNaN(num) ? p.trim() : num;
+    });
+  };
   
-  if (filtered.length === 0) {
+  const sortedProjs = [...filteredRaw].sort((a, b) => {
+    const tta = parseTT(a.tt);
+    const ttb = parseTT(b.tt);
+    for (let i = 0; i < Math.max(tta.length, ttb.length); i++) {
+      if (tta[i] === undefined) return -1;
+      if (ttb[i] === undefined) return 1;
+      if (tta[i] < ttb[i]) return -1;
+      if (tta[i] > ttb[i]) return 1;
+    }
+    return 0;
+  });
+  
+  // 3. Xác định Level và Trạng thái Cha (hasChildren) cho từng bản ghi
+  const projectsWithWbs = sortedProjs.map((item, idx) => {
+    const ttStr = String(item.tt || "").trim();
+    let level = 1;
+    if (ttStr.includes(".")) {
+      const parts = ttStr.split(".");
+      level = parts.length;
+    }
+    
+    let hasChildren = false;
+    for (let i = 0; i < sortedProjs.length; i++) {
+      const otherTt = String(sortedProjs[i].tt || "").trim();
+      if (otherTt !== ttStr && otherTt.startsWith(ttStr + ".")) {
+        hasChildren = true;
+        break;
+      }
+    }
+    
+    return {
+      ...item,
+      wbsLevel: level,
+      hasChildren: hasChildren
+    };
+  });
+  
+  document.getElementById("masterTableCount").textContent = `Hiển thị: ${filteredRaw.length} / ${state.master.length} gói thầu`;
+  
+  if (projectsWithWbs.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="44" class="table-empty-state">
@@ -705,15 +762,43 @@ function renderMasterTable() {
     return;
   }
   
-  filtered.forEach(r => {
-    // Chuyển đổi màu sắc trạng thái bằng Badges
-    const badgeDkDu = r.dieuKienDu === "ĐỦ ĐIỀU KIỆN KHỞI CÔNG" ? "badge-success" : "badge-danger";
+  projectsWithWbs.forEach(r => {
+    const level = r.wbsLevel;
+    const isWbs = r.hasChildren;
+    const ttStr = String(r.tt || "").trim();
+    const pkg = r.goiThauPl || "";
+    const basePkg = pkg.split('.')[0];
     
+    // Ràng buộc hiển thị theo "Cấp công trình" vs "Cấp chi tiết"
+    let rowStyle = "";
+    if (currentMasterViewLevel === "project" && level > 1) {
+      rowStyle = "display: none;";
+    }
+    
+    // CSS classes cho dòng
+    let trClass = "";
+    if (level === 1) {
+      trClass = "wbs-row-style";
+    } else if (level === 2) {
+      trClass = `child-row-${basePkg}-cdt wbs-level2-row`;
+    } else {
+      const parentPrefix = ttStr.substring(0, ttStr.lastIndexOf('.')).replace(/\./g, '_');
+      trClass = `child-row-level3-${parentPrefix}-cdt child-row-${basePkg}-cdt wbs-level3-row`;
+    }
+    
+    const tr = document.createElement("tr");
+    tr.className = trClass;
+    if (rowStyle) tr.style.cssText = rowStyle;
+    
+    tr.setAttribute("data-tt", ttStr);
+    tr.setAttribute("data-level", level);
+    tr.setAttribute("data-parent", basePkg);
+    
+    const badgeDkDu = r.dieuKienDu === "ĐỦ ĐIỀU KIỆN KHỞI CÔNG" ? "badge-success" : "badge-danger";
     let badgeBuTienDo = "badge-muted";
     if (r.buTienDo === "Đang chạy") badgeBuTienDo = "badge-info";
     else if (r.buTienDo === "Chậm tiến độ") badgeBuTienDo = "badge-danger";
     
-    // Tạo chuỗi giám sát tuần nhanh
     const getWeekBadge = (val) => {
       if (val === "Đạt") return "badge-success";
       if (val === "Chậm") return "badge-danger";
@@ -721,63 +806,92 @@ function renderMasterTable() {
       return "badge-muted";
     };
     
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="sticky-col-1" style="font-weight: 700; color: var(--primary);">${r.maBsc}</td>
-      <td class="sticky-col-2" style="font-weight: 600;" title="${r.hangMuc}">${r.hangMuc}</td>
-      <td class="sticky-col-3">${r.goiThauPl}</td>
-      <td class="sticky-col-4">${r.nhomCt}</td>
-      <td class="sticky-col-5">${r.phuTrach || '—'}</td>
-      <td style="font-weight: 700;">${r.nganSach ? r.nganSach.toFixed(2) : '0.00'}</td>
-      <td style="font-weight: 700;">${r.giaTriHdcu ? r.giaTriHdcu.toFixed(2) : '0.00'}</td>
-      <td style="font-weight: 600;">${r.tileHdcuNs ? r.tileHdcuNs.toFixed(1) + '%' : '0.0%'}</td>
-      <td><span class="badge ${badgeDkDu}">${r.dieuKienDu}</span></td>
-      <td>${formatDate(r.ngayBdKhoiCong)}</td>
-      <td style="font-weight: 700;">${r.luyKeGiaTriHdAB ? r.luyKeGiaTriHdAB.toFixed(2) : '0.00'}</td>
-      <td style="font-weight: 700; color: ${r.luyKePhatSinhBB > 0 ? 'var(--warning)' : 'inherit'};">
-        ${r.luyKePhatSinhBB ? r.luyKePhatSinhBB.toFixed(2) : '0.00'}
-      </td>
-      <td style="font-weight: 800; color: var(--primary);">${r.luyKeTongChiPhi ? r.luyKeTongChiPhi.toFixed(2) : '0.00'}</td>
-      <td><span class="badge ${badgeBuTienDo}">${r.buTienDo}</span></td>
+    // Thiết kế cột Hạng mục với nút Toggle và thụt lề
+    let hangMucHtml = "";
+    const paddingLeftVal = (level - 1) * 20;
+    const indentSymbol = level > 1 ? '<span style="color: var(--text-muted); margin-right: 6px; font-weight: bold;">└─</span>' : '';
+    
+    if (isWbs) {
+      const btnSymbol = "—";
+      const clickAction = level === 1 ? `toggleLevel1JS('${ttStr}')` : `toggleLevel2JS('${ttStr}')`;
+      const btnId = `btn-toggle-${ttStr.replace(/\./g, '_')}-cdt`;
       
-      <td>${r.ttHstktc}</td>
-      <td>${r.ttSpecs}</td>
-      <td>${r.ttBoq}</td>
+      hangMucHtml = `
+        <div style="padding-left: ${paddingLeftVal}px; display: flex; align-items: center;">
+          ${indentSymbol}
+          <span id="${btnId}" class="toggle-btn" onclick="${clickAction}">${btnSymbol}</span>
+          <b style="${level === 1 ? 'color: #1e3a8a; font-size: 0.82rem;' : ''}">${r.hangMuc}</b>
+        </div>
+      `;
+    } else {
+      hangMucHtml = `
+        <div style="padding-left: ${paddingLeftVal}px; display: flex; align-items: center;">
+          ${indentSymbol}
+          <span style="color: var(--text-main); ${level === 1 ? 'font-weight: 700;' : ''}">${r.hangMuc}</span>
+        </div>
+      `;
+    }
+    
+    const isLevel1ParentEmpty = (level === 1 && isWbs && !r.maBsc);
+    
+    tr.innerHTML = `
+      <td class="sticky-col-1" style="font-weight: 700; color: var(--primary); text-align: center;">${r.maBsc || (level === 1 ? r.tt : '—')}</td>
+      <td class="sticky-col-2" title="${r.hangMuc}">${hangMucHtml}</td>
+      <td class="sticky-col-3">${r.goiThauPl || '—'}</td>
+      <td class="sticky-col-4">${r.nhomCt || '—'}</td>
+      <td class="sticky-col-5">${r.phuTrach || '—'}</td>
+      <td style="font-weight: 700;">${formatNumberSafe(r.nganSach, 2, isLevel1ParentEmpty ? '' : '0.00')}</td>
+      <td style="font-weight: 700;">${formatNumberSafe(r.giaTriHdcu, 2, isLevel1ParentEmpty ? '' : '0.00')}</td>
+      <td style="font-weight: 600;">${r.tileHdcuNs ? formatNumberSafe(r.tileHdcuNs, 1, '0.0') + '%' : (isLevel1ParentEmpty ? '' : '0.0%')}</td>
+      <td>${isLevel1ParentEmpty ? '' : `<span class="badge ${badgeDkDu}">${r.dieuKienDu}</span>`}</td>
+      <td>${isLevel1ParentEmpty ? '' : formatDate(r.ngayBdKhoiCong)}</td>
+      <td style="font-weight: 700;">${formatNumberSafe(r.luyKeGiaTriHdAB, 2, isLevel1ParentEmpty ? '' : '0.00')}</td>
+      <td style="font-weight: 700; color: ${r.luyKePhatSinhBB > 0 ? 'var(--warning)' : 'inherit'};">
+        ${formatNumberSafe(r.luyKePhatSinhBB, 2, isLevel1ParentEmpty ? '' : '0.00')}
+      </td>
+      <td style="font-weight: 800; color: var(--primary);">${formatNumberSafe(r.luyKeTongChiPhi, 2, isLevel1ParentEmpty ? '' : '0.00')}</td>
+      <td>${isLevel1ParentEmpty ? '' : `<span class="badge ${badgeBuTienDo}">${r.buTienDo}</span>`}</td>
+      
+      <td>${r.ttHstktc || ''}</td>
+      <td>${r.ttSpecs || ''}</td>
+      <td>${r.ttBoq || ''}</td>
       <td>${formatDate(r.ngayBdYc)}</td>
       <td>${formatDate(r.ngayKtYc)}</td>
-      <td>${r.ttLcnt}</td>
-      <td>${r.ttHdcu}</td>
-      <td>${r.ttKhcu}</td>
-      <td>${r.ttKhtk}</td>
+      <td>${r.ttLcnt || ''}</td>
+      <td>${r.ttHdcu || ''}</td>
+      <td>${r.ttKhcu || ''}</td>
+      <td>${r.ttKhtk || ''}</td>
       
-      <td><span class="badge ${r.dk1 === 'Đạt' ? 'badge-success' : 'badge-danger'}">${r.dk1 || 'Chưa đạt'}</span></td>
-      <td><span class="badge ${r.dk2 === 'Đạt' ? 'badge-success' : 'badge-danger'}">${r.dk2 || 'Chưa đạt'}</span></td>
-      <td><span class="badge ${r.dk3 === 'Đạt' ? 'badge-success' : 'badge-danger'}">${r.dk3 || 'Chưa đạt'}</span></td>
+      <td>${isLevel1ParentEmpty ? '' : `<span class="badge ${r.dk1 === 'Đạt' ? 'badge-success' : 'badge-danger'}">${r.dk1 || 'Chưa đạt'}</span>`}</td>
+      <td>${isLevel1ParentEmpty ? '' : `<span class="badge ${r.dk2 === 'Đạt' ? 'badge-success' : 'badge-danger'}">${r.dk2 || 'Chưa đạt'}</span>`}</td>
+      <td>${isLevel1ParentEmpty ? '' : `<span class="badge ${r.dk3 === 'Đạt' ? 'badge-success' : 'badge-danger'}">${r.dk3 || 'Chưa đạt'}</span>`}</td>
       
-      <td title="${r.hsTienKc}">${r.hsTienKc}</td>
-      <td style="font-weight: 600; text-align:center;">${r.taiLieuKhThang}</td>
-      <td style="text-align: center; font-weight: 700; color: ${r.phatSinhChuaDuyet > 0 ? 'var(--warning)' : 'inherit'};">${r.phatSinhChuaDuyet}</td>
-      <td style="text-align: center; font-weight: 700; color: ${r.cungUngChuaDuyet > 0 ? 'var(--warning)' : 'inherit'};">${r.cungUngChuaDuyet}</td>
+      <td title="${r.hsTienKc || ''}">${r.hsTienKc || ''}</td>
+      <td style="font-weight: 600; text-align:center;">${r.taiLieuKhThang || ''}</td>
+      <td style="text-align: center; font-weight: 700; color: ${r.phatSinhChuaDuyet > 0 ? 'var(--warning)' : 'inherit'};">${r.phatSinhChuaDuyet || (isLevel1ParentEmpty ? '' : '0')}</td>
+      <td style="text-align: center; font-weight: 700; color: ${r.cungUngChuaDuyet > 0 ? 'var(--warning)' : 'inherit'};">${r.cungUngChuaDuyet || (isLevel1ParentEmpty ? '' : '0')}</td>
       
       <td>${r.t1Kh || '—'}</td>
       <td>${r.t1Kq || '—'}</td>
-      <td><span class="badge ${getWeekBadge(r.t1Dg)}">${r.t1Dg || '—'}</span></td>
+      <td>${isLevel1ParentEmpty ? '' : `<span class="badge ${getWeekBadge(r.t1Dg)}">${r.t1Dg || '—'}</span>`}</td>
       <td>${r.t2Kh || '—'}</td>
       <td>${r.t2Kq || '—'}</td>
-      <td><span class="badge ${getWeekBadge(r.t2Dg)}">${r.t2Dg || '—'}</span></td>
+      <td>${isLevel1ParentEmpty ? '' : `<span class="badge ${getWeekBadge(r.t2Dg)}">${r.t2Dg || '—'}</span>`}</td>
       <td>${r.t3Kh || '—'}</td>
       <td>${r.t3Kq || '—'}</td>
-      <td><span class="badge ${getWeekBadge(r.t3Dg)}">${r.t3Dg || '—'}</span></td>
+      <td>${isLevel1ParentEmpty ? '' : `<span class="badge ${getWeekBadge(r.t3Dg)}">${r.t3Dg || '—'}</span>`}</td>
       <td>${r.t4Kh || '—'}</td>
       <td>${r.t4Kq || '—'}</td>
-      <td><span class="badge ${getWeekBadge(r.t4Dg)}">${r.t4Dg || '—'}</span></td>
+      <td>${isLevel1ParentEmpty ? '' : `<span class="badge ${getWeekBadge(r.t4Dg)}">${r.t4Dg || '—'}</span>`}</td>
       
       <td style="text-align: center;">
+        ${isLevel1ParentEmpty ? '' : `
         <div class="row-actions">
           <button class="action-btn-icon ai-btn" onclick="analyzeRowWithAi('${r.maBsc}')" title="Phân tích AI"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
           <button class="action-btn-icon edit-btn" onclick="editMasterRow('${r.maBsc}')" title="Chỉnh sửa"><i class="fa-solid fa-pen-to-square"></i></button>
           <button class="action-btn-icon delete-btn" onclick="deleteMasterRow('${r.maBsc}')" title="Xóa"><i class="fa-solid fa-trash-can"></i></button>
         </div>
+        `}
       </td>
     `;
     tbody.appendChild(tr);
@@ -1749,13 +1863,13 @@ function importDataFromJson(e) {
 // ==========================================
 
 let geminiApiKey = "";
-let geminiModel = "gemini-3.5-flash";
+let geminiModel = "gemini-1.5-flash";
 let aiChatHistory = []; // Lưu lịch sử chat
 
 // Khởi tạo cài đặt AI
 function initAiSettings() {
   geminiApiKey = localStorage.getItem("VND_GEMINI_API_KEY") || "";
-  geminiModel = localStorage.getItem("VND_GEMINI_MODEL") || "gemini-3.5-flash";
+  geminiModel = localStorage.getItem("VND_GEMINI_MODEL") || "gemini-1.5-flash";
   document.getElementById("geminiApiKeyInput").value = geminiApiKey;
   document.getElementById("geminiModelSelect").value = geminiModel;
   updateAiStatusUI();
@@ -1794,7 +1908,7 @@ function updateAiStatusUI() {
 }
 
 // Gọi API Gemini REST với cơ chế tự phục hồi (Self-Healing Client)
-async function callGeminiApi(promptText) {
+async function callGeminiApi(promptText, options = {}) {
   if (!geminiApiKey) {
     alert("Vui lòng cấu hình Google Gemini API Key trong thanh Sidebar trước khi sử dụng tính năng này!");
     switchTab("dashboard");
@@ -1813,6 +1927,15 @@ async function callGeminiApi(promptText) {
       }
     ]
   };
+
+  // Cấu hình generationConfig tối ưu tốc độ phản hồi
+  const config = {
+    temperature: options.temperature !== undefined ? options.temperature : 0.2
+  };
+  if (options.isJsonMode) {
+    config.responseMimeType = "application/json";
+  }
+  requestBody.generationConfig = config;
 
   // Các phương án URL kết nối xếp theo độ ưu tiên (Self-Healing Paths)
   const endpoints = [
@@ -2258,6 +2381,7 @@ function exportToExcel() {
 }
 
 // Nhập toàn bộ cơ sở dữ liệu từ file Excel
+// Nhập toàn bộ cơ sở dữ liệu từ file Excel
 function importFromExcel(e) {
   if (typeof XLSX === "undefined") {
     alert("Thư viện SheetJS chưa được tải thành công. Vui lòng kiểm tra lại kết nối mạng!");
@@ -2275,114 +2399,279 @@ function importFromExcel(e) {
       
       const newState = { master: [], so01: [], so02: [], so03: [], so04: [], so05: [] };
 
-      // Hàm dịch ngược tiêu đề tiếng Việt sang Key tiếng Anh và ép kiểu dữ liệu
-      const reverseMapData = (sheetJson, reverseMap) => {
-        return sheetJson.map(row => {
-          const item = {};
-          for (const [viHeader, engKey] of Object.entries(reverseMap)) {
-            if (row[viHeader] !== undefined) {
-              // Ràng buộc kiểu dữ liệu số và số nguyên
-              if (["nganSach", "giaTriHdcu", "luyKeGiaTriHdAB", "giaTri", "kl"].includes(engKey)) {
-                item[engKey] = parseFloat(row[viHeader]) || 0;
-              } else if (["tt", "stt", "mucCham", "anhHuongTd"].includes(engKey)) {
-                item[engKey] = parseInt(row[viHeader]) || 0;
-              } else {
-                item[engKey] = String(row[viHeader]).trim();
-              }
-            }
-          }
-          return item;
-        });
+      // Helper function to clean string
+      const cleanStr = (val) => {
+        if (val === undefined || val === null) return "";
+        return String(val).trim();
       };
 
-      // 1. Đọc sheet MASTER_DATA
-      const wsMaster = workbook.Sheets["MASTER_DATA"];
+      // Helper function to parse float
+      const cleanFloat = (val) => {
+        if (val === undefined || val === null || val === "") return 0;
+        const num = parseFloat(String(val).replace(/,/g, ''));
+        return isNaN(num) ? 0 : num;
+      };
+
+      // Helper function to parse int
+      const cleanInt = (val) => {
+        if (val === undefined || val === null || val === "") return 0;
+        const num = parseInt(String(val).replace(/,/g, ''));
+        return isNaN(num) ? 0 : num;
+      };
+
+      // Helper function to format Excel date to YYYY-MM-DD
+      const cleanDate = (val) => {
+        if (val === undefined || val === null || val === "") return "";
+        if (typeof val === "number") {
+          const date = new Date((val - 25569) * 86400 * 1000);
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, '0');
+          const d = String(date.getDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        }
+        const str = String(val).trim();
+        if (str.match(/^\d{4}-\d{2}-\d{2}$/)) return str;
+        const parsed = Date.parse(str);
+        if (!isNaN(parsed)) {
+          const date = new Date(parsed);
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, '0');
+          const d = String(date.getDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        }
+        return str;
+      };
+
+      // 1. Đọc sheet MASTER_DATA hoặc BANG TONG HOP
+      let wsMaster = workbook.Sheets["BANG TONG HOP"] || workbook.Sheets["MASTER_DATA"];
       if (wsMaster) {
-        const json = XLSX.utils.sheet_to_json(wsMaster);
-        const masterReverseMap = {
-          "Mã BSC": "maBsc", "Gói thầu (PL)": "goiThauPl", "Nhóm CT": "nhomCt",
-          "Hạng mục / Công việc": "hangMuc", "Phụ trách": "phuTrach", "Ngày BĐ (YC CĐT)": "ngayBdYc",
-          "Ngày KT (YC CĐT)": "ngayKtYc", "Ngân sách (tỷ)": "nganSach", "KH phát hành HSTKTC": "khHstktc",
-          "TT HSTKTC": "ttHstktc", "TT SPECS": "ttSpecs", "TT BOQ/KL": "ttBoq", "KH LCNT": "khLcnt",
-          "TT LCNT": "ttLcnt", "KH Ký HĐCU": "khHdcu", "TT Ký HĐCU": "ttHdcu", "KH PD KHCU": "khPdKhcu",
-          "TT KHCU": "ttKhcu", "Giá trị HĐCU (tỷ)": "giaTriHdcu", "KH ký PLHĐ CĐT": "khPlhdCdt",
-          "TT Ký PLHĐ CĐT": "ttPlhdCdt", "KH PD KHTK": "khPdKhtk", "TT KHTK": "ttKhtk",
-          "ĐK1 HSKT đủ": "dk1", "ĐK2 HĐCU ký": "dk2", "ĐK3 KHTK duyệt": "dk3",
-          "NGÀY BĐ KHỞI CÔNG": "ngayBdKhoiCong", "LŨY KẾ GIÁ TRỊ HĐ A - B": "luyKeGiaTriHdAB",
-          "Bù tiến độ đang chạy": "buTienDo", "KH KLCV tháng - QA/QC": "khQaQc", "KQ KLCV tháng - QA/QC": "kqQaQc",
-          "Đánh giá & giải pháp tháng - QA/QC": "dgQaQc", "KH KLCV tháng - Thi công": "khThiCong",
-          "KQ KLCV tháng - Thi công": "kqThiCong", "Đánh giá & giải pháp tháng - Thi công": "dgThiCong",
-          "T1 KH": "t1Kh", "T1 KQ": "t1Kq", "T1 Đánh giá": "t1Dg",
-          "T2 KH": "t2Kh", "T2 KQ": "t2Kq", "T2 Đánh giá": "t2Dg",
-          "T3 KH": "t3Kh", "T3 KQ": "t3Kq", "T3 Đánh giá": "t3Dg",
-          "T4 KH": "t4Kh", "T4 KQ": "t4Kq", "T4 Đánh giá": "t4Dg"
-        };
-        newState.master = reverseMapData(json, masterReverseMap);
+        const rows = XLSX.utils.sheet_to_json(wsMaster, { header: 1 });
+        let currentPl = null;
+        let startIndex = 5;
+        if (rows[0] && String(rows[0][0]).toUpperCase() === "TT") {
+          startIndex = 1;
+        } else if (rows[3] && String(rows[3][0]).toUpperCase() === "TT") {
+          startIndex = 4;
+        } else if (rows[4] && String(rows[4][0]).toUpperCase() === "TT") {
+          startIndex = 5;
+        }
+        
+        for (let i = startIndex; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length < 5) continue;
+          if (!row[0] && !row[4]) continue;
+          
+          let tt = cleanStr(row[0]);
+          let maBsc = cleanStr(row[1]);
+          let goiThauPl = cleanStr(row[2]);
+          
+          if (goiThauPl && goiThauPl.toUpperCase().startsWith("PL")) {
+            currentPl = goiThauPl;
+          }
+          if (!goiThauPl || !goiThauPl.toUpperCase().startsWith("PL")) {
+            if (currentPl) {
+              goiThauPl = currentPl;
+            } else {
+              continue;
+            }
+          }
+          
+          newState.master.push({
+            tt: tt,
+            maBsc: maBsc,
+            goiThauPl: goiThauPl,
+            nhomCt: cleanStr(row[3]),
+            hangMuc: cleanStr(row[4]),
+            phuTrach: cleanStr(row[5]),
+            ngayBdYc: cleanDate(row[6]),
+            ngayKtYc: cleanDate(row[7]),
+            nganSach: cleanFloat(row[8]),
+            khHstktc: cleanDate(row[9]),
+            ttHstktc: cleanStr(row[10]),
+            ttSpecs: cleanStr(row[11]),
+            ttBoq: cleanStr(row[12]),
+            khLcnt: cleanDate(row[13]),
+            ttLcnt: cleanStr(row[14]),
+            khHdcu: cleanDate(row[15]),
+            ttHdcu: cleanStr(row[16]),
+            khPdKhcu: cleanDate(row[17]),
+            ttKhcu: cleanStr(row[18]),
+            giaTriHdcu: cleanFloat(row[19]),
+            khPlhdCdt: cleanDate(row[21]),
+            ttPlhdCdt: cleanStr(row[22]),
+            khPdKhtk: cleanDate(row[23]),
+            ttKhtk: cleanStr(row[24]),
+            ngayBdKhoiCong: cleanDate(row[29]),
+            luyKeGiaTriHdAB: cleanFloat(row[33]),
+            buTienDo: cleanStr(row[34]),
+            khQaQc: cleanStr(row[38]),
+            kqQaQc: cleanStr(row[39]),
+            dgQaQc: cleanStr(row[40]),
+            khThiCong: cleanStr(row[41]),
+            kqThiCong: cleanStr(row[42]),
+            dgThiCong: cleanStr(row[43]),
+            t1Kh: cleanStr(row[44]),
+            t1Kq: cleanStr(row[45]),
+            t1Dg: cleanStr(row[46]),
+            t2Kh: cleanStr(row[47]),
+            t2Kq: cleanStr(row[48]),
+            t2Dg: cleanStr(row[49]),
+            t3Kh: cleanStr(row[50]),
+            t3Kq: cleanStr(row[51]),
+            t3Dg: cleanStr(row[52]),
+            t4Kh: cleanStr(row[53]),
+            t4Kq: cleanStr(row[54]),
+            t4Dg: cleanStr(row[55])
+          });
+        }
       }
 
-      // 2. Đọc sheet SO_01_TIEN_KHOI_CONG
-      const wsSo01 = workbook.Sheets["SO_01_TIEN_KHOI_CONG"];
+      // 2. Đọc sheet SO_01_TIEN_KHOI_CONG hoặc 01_HSo TienKC
+      let wsSo01 = workbook.Sheets["01_HSo TienKC"] || workbook.Sheets["SO_01_TIEN_KHOI_CONG"];
       if (wsSo01) {
-        const json = XLSX.utils.sheet_to_json(wsSo01);
-        const map = {
-          "STT": "stt", "Mã BSC": "maBsc", "Hạng mục": "hangMuc", "Loại hồ sơ": "loaiHoSo",
-          "Tên sản phẩm / Số hiệu": "tenSpham", "LINK lưu trữ": "linkLuuTru", "Ngày HT": "ngayHt",
-          "Người lập": "nguoiLap", "Người duyệt": "nguoiDuyet", "TT duyệt": "ttDuyet"
-        };
-        newState.so01 = reverseMapData(json, map);
+        const rows = XLSX.utils.sheet_to_json(wsSo01, { header: 1 });
+        let startIndex = 1;
+        if (rows[1] && (String(rows[1][0]).toUpperCase() === "STT" || String(rows[1][1]).toUpperCase() === "M\u00C3 BSC")) {
+          startIndex = 2;
+        }
+        for (let i = startIndex; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length < 4 || !row[1]) continue;
+          newState.so01.push({
+            stt: cleanInt(row[0]),
+            maBsc: cleanStr(row[1]),
+            hangMuc: cleanStr(row[2]),
+            loaiHoSo: cleanStr(row[3]),
+            tenSpham: cleanStr(row[4]),
+            linkLuuTru: cleanStr(row[5]),
+            ngayHt: cleanDate(row[6]),
+            nguoiLap: cleanStr(row[7]),
+            nguoiDuyet: cleanStr(row[8]),
+            ttDuyet: cleanStr(row[9])
+          });
+        }
       }
 
-      // 3. Đọc sheet SO_02_KE_HOACH
-      const wsSo02 = workbook.Sheets["SO_02_KE_HOACH"];
+      // 3. Đọc sheet SO_02_KE_HOACH hoặc 02_KH Thang_Tuan
+      let wsSo02 = workbook.Sheets["02_KH Thang_Tuan"] || workbook.Sheets["SO_02_KE_HOACH"];
       if (wsSo02) {
-        const json = XLSX.utils.sheet_to_json(wsSo02);
-        const map = {
-          "STT": "stt", "Mã BSC": "maBsc", "Hạng mục": "hangMuc", "Tháng": "thang",
-          "Loại tài liệu": "loaiTaiLieu", "Nội dung chính": "noiDungChinh", "Đạt YCKT CĐT": "datYckt",
-          "LINK tài liệu": "linkTaiLieu", "TT lập": "ttLap", "TT duyệt": "ttDuyet",
-          "Người lập": "nguoiLap", "Người duyệt": "nguoiDuyet", "Ngày duyệt": "ngayDuyet"
-        };
-        newState.so02 = reverseMapData(json, map);
+        const rows = XLSX.utils.sheet_to_json(wsSo02, { header: 1 });
+        let startIndex = 1;
+        if (rows[1] && (String(rows[1][0]).toUpperCase() === "STT" || String(rows[1][1]).toUpperCase() === "M\u00C3 BSC")) {
+          startIndex = 2;
+        }
+        for (let i = startIndex; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length < 5 || !row[1]) continue;
+          newState.so02.push({
+            stt: cleanInt(row[0]),
+            maBsc: cleanStr(row[1]),
+            hangMuc: cleanStr(row[2]),
+            thang: cleanStr(row[3]),
+            loaiTaiLieu: cleanStr(row[4]),
+            noiDungChinh: cleanStr(row[5]),
+            datYckt: cleanStr(row[6]),
+            linkTaiLieu: cleanStr(row[7]),
+            ttLap: cleanStr(row[8]),
+            ttDuyet: cleanStr(row[9]),
+            nguoiLap: cleanStr(row[10]),
+            nguoiDuyet: cleanStr(row[11]),
+            ngayDuyet: cleanDate(row[12])
+          });
+        }
       }
 
-      // 4. Đọc sheet SO_03_PHAT_SINH
-      const wsSo03 = workbook.Sheets["SO_03_PHAT_SINH"];
+      // 4. Đọc sheet SO_03_PHAT_SINH hoặc 03_Phat sinh
+      let wsSo03 = workbook.Sheets["03_Phat sinh"] || workbook.Sheets["SO_03_PHAT_SINH"];
       if (wsSo03) {
-        const json = XLSX.utils.sheet_to_json(wsSo03);
-        const map = {
-          "Mã PS": "maPs", "Mã BSC": "maBsc", "Hạng mục": "hangMuc", "Ngày PS": "ngayPs",
-          "Loại": "loai", "Mô tả": "moTa", "Nguyên nhân": "nguyenNhan", "Đề xuất xử lý": "deXuat",
-          "Giá trị (tỷ)": "giaTri", "Ảnh hưởng TĐ (ngày)": "anhHuongTd", "LINK hồ sơ": "linkHoSo",
-          "TT duyệt": "ttDuyet", "Người duyệt": "nguoiDuyet", "Ngày duyệt": "ngayDuyet",
-          "Nội dung điều chỉnh (KH→KQ)": "noiDungDieuChinh"
-        };
-        newState.so03 = reverseMapData(json, map);
+        const rows = XLSX.utils.sheet_to_json(wsSo03, { header: 1 });
+        let startIndex = 1;
+        if (rows[1] && (String(rows[1][0]).toUpperCase() === "M\u00C3 PS" || String(rows[1][2]).toUpperCase() === "M\u00C3 BSC")) {
+          startIndex = 2;
+        }
+        for (let i = startIndex; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length < 5 || !row[2]) continue;
+          newState.so03.push({
+            maPs: cleanStr(row[0]),
+            stt: cleanInt(row[1]),
+            maBsc: cleanStr(row[2]),
+            hangMuc: cleanStr(row[3]),
+            ngayPs: cleanDate(row[4]),
+            loai: cleanStr(row[5]),
+            moTa: cleanStr(row[6]),
+            nguyenNhan: cleanStr(row[7]),
+            deXuat: cleanStr(row[8]),
+            giaTri: cleanFloat(row[9]),
+            anhHuongTd: cleanInt(row[10]),
+            linkHoSo: cleanStr(row[11]),
+            ttDuyet: cleanStr(row[12]),
+            nguoiDuyet: cleanStr(row[13]),
+            ngayDuyet: cleanDate(row[14]),
+            noiDungDieuChinh: cleanStr(row[15])
+          });
+        }
       }
 
-      // 5. Đọc sheet SO_04_CUNG_UNG
-      const wsSo04 = workbook.Sheets["SO_04_CUNG_UNG"];
+      // 5. Đọc sheet SO_04_CUNG_UNG hoặc 04_CU dac thu
+      let wsSo04 = workbook.Sheets["04_CU dac thu"] || workbook.Sheets["SO_04_CUNG_UNG"];
       if (wsSo04) {
-        const json = XLSX.utils.sheet_to_json(wsSo04);
-        const map = {
-          "Mã YC": "maYc", "Mã BSC": "maBsc", "Hạng mục": "hangMuc", "Ngày YC": "ngayYc",
-          "Loại YC": "loaiYc", "Vật tư / Thiết bị": "vatTu", "Đặc tả KT / Lý do": "dacTa",
-          "KL": "kl", "ĐVT": "dvt", "Giá trị (tỷ)": "giaTri", "Trong/Ngoài HĐCU": "trongNgoaiHd",
-          "LINK hồ sơ": "linkHoSo", "TT duyệt": "ttDuyet", "Ngày cần": "ngayCan", "TT cung ứng": "ttCungUng"
-        };
-        newState.so04 = reverseMapData(json, map);
+        const rows = XLSX.utils.sheet_to_json(wsSo04, { header: 1 });
+        let startIndex = 1;
+        if (rows[1] && (String(rows[1][0]).toUpperCase() === "M\u00C3 YC" || String(rows[1][2]).toUpperCase() === "M\u00C3 BSC")) {
+          startIndex = 2;
+        }
+        for (let i = startIndex; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length < 5 || !row[2]) continue;
+          newState.so04.push({
+            maYc: cleanStr(row[0]),
+            stt: cleanInt(row[1]),
+            maBsc: cleanStr(row[2]),
+            hangMuc: cleanStr(row[3]),
+            ngayYc: cleanDate(row[4]),
+            loaiYc: cleanStr(row[5]),
+            vatTu: cleanStr(row[6]),
+            dacTa: cleanStr(row[7]),
+            kl: cleanFloat(row[8]),
+            dvt: cleanStr(row[9]),
+            giaTri: cleanFloat(row[10]),
+            trongNgoaiHd: cleanStr(row[11]),
+            linkHoSo: cleanStr(row[12]),
+            ttDuyet: cleanStr(row[13]),
+            ngayCan: cleanDate(row[14]),
+            ttCungUng: cleanStr(row[15])
+          });
+        }
       }
 
-      // 6. Đọc sheet SO_05_BU_TIEN_DO
-      const wsSo05 = workbook.Sheets["SO_05_BU_TIEN_DO"];
+      // 6. Đọc sheet SO_05_BU_TIEN_DO hoặc 05_Bu tien do
+      let wsSo05 = workbook.Sheets["05_Bu tien do"] || workbook.Sheets["SO_05_BU_TIEN_DO"];
       if (wsSo05) {
-        const json = XLSX.utils.sheet_to_json(wsSo05);
-        const map = {
-          "STT": "stt", "Mã BSC": "maBsc", "Hạng mục": "hangMuc", "Ngày phát hiện": "ngayPhatHien",
-          "Mức chậm (ngày)": "mucCham", "Nguyên nhân": "nguyenNhan", "Giải pháp bù": "giaiPhapBu",
-          "Chi tiết giải pháp": "chiTietGiaiPhap", "Mốc cam kết HT": "mocCamKet", "LINK phương án": "linkPhuongAn",
-          "TT duyệt": "ttDuyet", "KQ thực hiện bù": "kqThucHienBu", "TT thực hiện": "ttThucHien"
-        };
-        newState.so05 = reverseMapData(json, map);
+        const rows = XLSX.utils.sheet_to_json(wsSo05, { header: 1 });
+        let startIndex = 1;
+        if (rows[1] && (String(rows[1][0]).toUpperCase() === "STT" || String(rows[1][1]).toUpperCase() === "M\u00C3 BSC")) {
+          startIndex = 2;
+        }
+        for (let i = startIndex; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length < 4 || !row[1]) continue;
+          newState.so05.push({
+            stt: cleanInt(row[0]),
+            maBsc: cleanStr(row[1]),
+            hangMuc: cleanStr(row[2]),
+            ngayPhatHien: cleanDate(row[3]),
+            mucCham: cleanInt(row[4]),
+            nguyenNhan: cleanStr(row[5]),
+            giaiPhapBu: cleanStr(row[6]),
+            chiTietGiaiPhap: cleanStr(row[7]),
+            mocCamKet: cleanDate(row[8]),
+            linkPhuongAn: cleanStr(row[9]),
+            ttDuyet: cleanStr(row[10]),
+            kqThucHienBu: cleanStr(row[11]),
+            ttThucHien: cleanStr(row[12])
+          });
+        }
       }
 
       // Đồng bộ và cập nhật lại giao diện
@@ -2390,10 +2679,10 @@ function importFromExcel(e) {
         state = newState;
         recalculateAllFormulas();
         saveStateToStorage(true);
-        alert("Đã nhập dữ liệu từ file Excel thành công! Hệ thống đã tự động tính toán lại toàn bộ công thức liên kết.");
+        alert("Đã nhập dữ liệu từ file Excel thành công! Hệ thống đã tự động tính toán lại toàn bộ công thức liên kết và phân cấp gói thầu.");
         switchTab("dashboard");
       } else {
-        alert("Không tìm thấy dữ liệu MASTER_DATA hợp lệ trong tệp Excel. Vui lòng kiểm tra lại tên sheet.");
+        alert("Không tìm thấy dữ liệu BANG TONG HOP hoặc MASTER_DATA hợp lệ trong tệp Excel. Vui lòng kiểm tra lại tên sheet.");
       }
     } catch (err) {
       alert("Lỗi phân tích tệp Excel: " + err.message);
@@ -2525,7 +2814,7 @@ ${JSON.stringify(systemSampleSchema, null, 2)}
   `;
 
   try {
-    const jsonResponse = await callGeminiApi(promptText);
+    const jsonResponse = await callGeminiApi(promptText, { isJsonMode: true, temperature: 0.1 });
     
     // Tách bỏ markdown block nếu AI vẫn trả về dạng ```json ... ```
     let cleanJson = jsonResponse.trim();
@@ -2680,8 +2969,68 @@ window.setMasterViewLevel = function(level) {
     btnDetail.classList.toggle("active", level === "detail");
   }
   
+  renderMasterTable();
   applyMasterColumnVisibility();
 };
+
+window.toggleLevel1JS = function(parentTt) {
+  const rows = document.querySelectorAll("#masterTableBody tr");
+  const btn = document.getElementById(`btn-toggle-${parentTt.replace(/\./g, '_')}-cdt`);
+  if (!rows || rows.length === 0) return;
+  
+  let isHidden = false;
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const tt = row.getAttribute("data-tt");
+    if (tt && tt !== parentTt && tt.startsWith(parentTt + ".")) {
+      isHidden = (row.style.display === 'none' || window.getComputedStyle(row).display === 'none');
+      break;
+    }
+  }
+  
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const tt = row.getAttribute("data-tt");
+    if (tt && tt !== parentTt && tt.startsWith(parentTt + ".")) {
+      row.style.display = isHidden ? "" : "none";
+    }
+  }
+  
+  if (btn) {
+    btn.innerHTML = isHidden ? "—" : "+";
+  }
+};
+
+window.toggleLevel2JS = function(parentTt) {
+  const rows = document.querySelectorAll("#masterTableBody tr");
+  const btn = document.getElementById(`btn-toggle-${parentTt.replace(/\./g, '_')}-cdt`);
+  if (!rows || rows.length === 0) return;
+  
+  let isHidden = false;
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const tt = row.getAttribute("data-tt");
+    if (tt && tt !== parentTt && tt.startsWith(parentTt + ".")) {
+      isHidden = (row.style.display === 'none' || window.getComputedStyle(row).display === 'none');
+      break;
+    }
+  }
+  
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const tt = row.getAttribute("data-tt");
+    if (tt && tt !== parentTt && tt.startsWith(parentTt + ".")) {
+      row.style.display = isHidden ? "" : "none";
+    }
+  }
+  
+  if (btn) {
+    btn.innerHTML = isHidden ? "—" : "+";
+  }
+};
+
+// Bí danh để tương thích ngược nếu có
+window.togglePackageJS = window.toggleLevel1JS;
 
 window.setMasterSubTab = function(subtab) {
   currentMasterSubTab = subtab;
