@@ -266,6 +266,45 @@
         
         <!-- ==================== TAB: BẢNG MASTER (MASTER_DATA) ==================== -->
         <section class="tab-content" id="tab-master">
+          <!-- Master Sub-navigation Panel -->
+          <div class="master-nav-panel">
+            <!-- Cấp độ hiển thị -->
+            <div class="view-level-section">
+              <span class="section-label">CẤP ĐỘ HIỂN THỊ:</span>
+              <div class="view-level-buttons">
+                <button type="button" class="view-level-btn" id="viewLevelProjectBtn" onclick="setMasterViewLevel('project')">Cấp công trình</button>
+                <button type="button" class="view-level-btn active" id="viewLevelDetailBtn" onclick="setMasterViewLevel('detail')">Cấp chi tiết</button>
+              </div>
+            </div>
+            
+            <!-- Tab chức năng (Sub-tabs) -->
+            <div class="master-subtabs-wrapper">
+              <div class="master-subtabs">
+                <button type="button" class="subtab-btn active" id="subtabCdtBtn" onclick="setMasterSubTab('cdt')">
+                  <i class="fa-solid fa-circle text-danger" style="font-size: 0.65rem; vertical-align: middle;"></i> A. Đầu vào CĐT
+                </button>
+                <button type="button" class="subtab-btn" id="subtabContractBtn" onclick="setMasterSubTab('contract')">
+                  <i class="fa-solid fa-truck"></i> B. Cung ứng & Hợp đồng
+                </button>
+                <button type="button" class="subtab-btn" id="subtabPlanBtn" onclick="setMasterSubTab('plan')">
+                  <i class="fa-solid fa-calendar-days"></i> C. Kế hoạch Triển khai
+                </button>
+                <button type="button" class="subtab-btn" id="subtabStartBtn" onclick="setMasterSubTab('start')">
+                  <i class="fa-solid fa-bolt"></i> D. Chốt chặn Khởi công
+                </button>
+                <button type="button" class="subtab-btn" id="subtabBudgetBtn" onclick="setMasterSubTab('budget')">
+                  <i class="fa-solid fa-sack-dollar"></i> E. Ngân sách & Chi phí
+                </button>
+                <button type="button" class="subtab-btn" id="subtabExecBtn" onclick="setMasterSubTab('exec')">
+                  <i class="fa-solid fa-chart-column"></i> G. Quản lý Thi công
+                </button>
+                <button type="button" class="subtab-btn" id="subtabAllBtn" onclick="setMasterSubTab('all')">
+                  <i class="fa-solid fa-table"></i> Tất cả dữ liệu
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Toolbar -->
           <div class="table-toolbar">
             <div class="toolbar-search-filter">
@@ -308,11 +347,11 @@
               <table class="data-table" id="masterDataTable">
                 <thead>
                   <tr>
-                    <th class="sticky-col">Mã BSC</th>
-                    <th>Hạng mục / Công việc</th>
-                    <th>Gói thầu (PL)</th>
-                    <th>Nhóm CT</th>
-                    <th>Phụ trách</th>
+                    <th class="sticky-col-1">Mã BSC</th>
+                    <th class="sticky-col-2">Hạng mục / Công việc</th>
+                    <th class="sticky-col-3">Gói thầu (PL)</th>
+                    <th class="sticky-col-4">Nhóm CT</th>
+                    <th class="sticky-col-5">Phụ trách</th>
                     <th>Ngân sách (tỷ)</th>
                     <th>Giá trị HĐ (tỷ)</th>
                     <th>% HĐCU/NS</th>
