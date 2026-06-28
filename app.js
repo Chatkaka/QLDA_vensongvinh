@@ -15,6 +15,10 @@ let state = {
 // Trạng thái Tab hiện tại
 let currentTab = "dashboard";
 
+// Các biến trạng thái của Tab Master
+let currentMasterSubTab = "cdt";
+let currentMasterViewLevel = "detail";
+
 // Khởi chạy ứng dụng
 document.addEventListener("DOMContentLoaded", () => {
   initSystem();
@@ -719,11 +723,11 @@ function renderMasterTable() {
     
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="sticky-col" style="font-weight: 700; color: var(--primary);">${r.maBsc}</td>
-      <td style="font-weight: 600;" title="${r.hangMuc}">${r.hangMuc}</td>
-      <td>${r.goiThauPl}</td>
-      <td>${r.nhomCt}</td>
-      <td>${r.phuTrach || '—'}</td>
+      <td class="sticky-col-1" style="font-weight: 700; color: var(--primary);">${r.maBsc}</td>
+      <td class="sticky-col-2" style="font-weight: 600;" title="${r.hangMuc}">${r.hangMuc}</td>
+      <td class="sticky-col-3">${r.goiThauPl}</td>
+      <td class="sticky-col-4">${r.nhomCt}</td>
+      <td class="sticky-col-5">${r.phuTrach || '—'}</td>
       <td style="font-weight: 700;">${r.nganSach ? r.nganSach.toFixed(2) : '0.00'}</td>
       <td style="font-weight: 700;">${r.giaTriHdcu ? r.giaTriHdcu.toFixed(2) : '0.00'}</td>
       <td style="font-weight: 600;">${r.tileHdcuNs ? r.tileHdcuNs.toFixed(1) + '%' : '0.0%'}</td>
@@ -778,6 +782,7 @@ function renderMasterTable() {
     `;
     tbody.appendChild(tr);
   });
+  applyMasterColumnVisibility();
 }
 
 // 5.2. Render Sổ 01 - Hồ sơ tiền khởi công
@@ -2645,3 +2650,88 @@ function applyAiImportData(isOverwrite) {
   // Chuyển về Dashboard để xem dữ liệu
   switchTab("dashboard");
 }
+
+// ==================== CÁC HÀM XỬ LÝ SUB-TABS & VIEW LEVEL CHO BẢNG MASTER ====================
+// Định nghĩa các cột hiển thị cho từng Sub-tab (chỉ số cột từ 0 đến 42)
+const MASTER_SUBTAB_COLUMNS = {
+  all: Array.from({length: 43}, (_, i) => i),
+  cdt: [0, 1, 2, 3, 4, 5, 17, 18, 42], // A. Đầu vào CĐT
+  contract: [0, 1, 2, 3, 4, 5, 6, 7, 19, 20, 21, 42], // B. Cung ứng & Hợp đồng
+  plan: [0, 1, 2, 3, 4, 14, 15, 16, 22, 27, 42], // C. Kế hoạch triển khai
+  start: [0, 1, 2, 3, 4, 8, 9, 23, 24, 25, 26, 42], // D. Chốt chặn khởi công
+  budget: [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 28, 29, 42], // E. Ngân sách & Chi phí
+  exec: [0, 1, 2, 3, 4, 13, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42] // G. Quản lý thi công
+};
+
+// Các cột ẩn ở "Cấp công trình"
+const PROJECT_LEVEL_HIDDEN_COLUMNS = [
+  23, 24, 25, // ĐK1, ĐK2, ĐK3
+  30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41 // Các tuần thi công T1-T4
+];
+
+window.setMasterViewLevel = function(level) {
+  currentMasterViewLevel = level;
+  
+  // Cập nhật giao diện nút
+  const btnProject = document.getElementById("viewLevelProjectBtn");
+  const btnDetail = document.getElementById("viewLevelDetailBtn");
+  if (btnProject && btnDetail) {
+    btnProject.classList.toggle("active", level === "project");
+    btnDetail.classList.toggle("active", level === "detail");
+  }
+  
+  applyMasterColumnVisibility();
+};
+
+window.setMasterSubTab = function(subtab) {
+  currentMasterSubTab = subtab;
+  
+  // Cập nhật class active trên nút Sub-tabs
+  const subtabs = ["all", "cdt", "contract", "plan", "start", "budget", "exec"];
+  subtabs.forEach(tab => {
+    const btn = document.getElementById(`subtab${tab.charAt(0).toUpperCase() + tab.slice(1)}Btn`);
+    if (btn) {
+      btn.classList.toggle("active", tab === subtab);
+    }
+  });
+  
+  applyMasterColumnVisibility();
+};
+
+window.applyMasterColumnVisibility = function() {
+  const table = document.getElementById("masterDataTable");
+  if (!table) return;
+  
+  const activeCols = MASTER_SUBTAB_COLUMNS[currentMasterSubTab] || MASTER_SUBTAB_COLUMNS.all;
+  const theadRows = table.querySelectorAll("thead tr");
+  const tbodyRows = table.querySelectorAll("tbody tr");
+  
+  // 1. Xử lý Header
+  theadRows.forEach(row => {
+    const ths = row.querySelectorAll("th");
+    ths.forEach((th, idx) => {
+      let shouldShow = activeCols.includes(idx);
+      if (shouldShow && currentMasterViewLevel === "project") {
+        if (PROJECT_LEVEL_HIDDEN_COLUMNS.includes(idx)) {
+          shouldShow = false;
+        }
+      }
+      th.style.display = shouldShow ? "" : "none";
+    });
+  });
+  
+  // 2. Xử lý Body
+  tbodyRows.forEach(row => {
+    const tds = row.querySelectorAll("td");
+    tds.forEach((td, idx) => {
+      if (idx >= tds.length) return;
+      let shouldShow = activeCols.includes(idx);
+      if (shouldShow && currentMasterViewLevel === "project") {
+        if (PROJECT_LEVEL_HIDDEN_COLUMNS.includes(idx)) {
+          shouldShow = false;
+        }
+      }
+      td.style.display = shouldShow ? "" : "none";
+    });
+  });
+};
