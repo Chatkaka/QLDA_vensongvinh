@@ -745,18 +745,65 @@ a:hover {
   border-bottom: none;
 }
 
-/* Highlight Sticky ID column for Master */
-.data-table td.sticky-col, .data-table th.sticky-col {
-  position: sticky;
-  left: 0;
-  background-color: var(--bg-card);
-  z-index: 5;
-  border-right: 1px solid var(--border-color);
-  box-shadow: 2px 0 5px rgba(0,0,0,0.02);
+/* Highlight 5 Sticky columns for Master */
+.sticky-col-1 {
+  position: sticky !important;
+  left: 0px !important;
+  z-index: 10 !important;
+  min-width: 85px !important;
+  max-width: 85px !important;
+  width: 85px !important;
+  background-color: var(--bg-card) !important;
+}
+.sticky-col-2 {
+  position: sticky !important;
+  left: 85px !important;
+  z-index: 10 !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  width: 220px !important;
+  background-color: var(--bg-card) !important;
+}
+.sticky-col-3 {
+  position: sticky !important;
+  left: 305px !important;
+  z-index: 10 !important;
+  min-width: 110px !important;
+  max-width: 110px !important;
+  width: 110px !important;
+  background-color: var(--bg-card) !important;
+}
+.sticky-col-4 {
+  position: sticky !important;
+  left: 415px !important;
+  z-index: 10 !important;
+  min-width: 115px !important;
+  max-width: 115px !important;
+  width: 115px !important;
+  background-color: var(--bg-card) !important;
+}
+.sticky-col-5 {
+  position: sticky !important;
+  left: 530px !important;
+  z-index: 10 !important;
+  min-width: 115px !important;
+  max-width: 115px !important;
+  width: 115px !important;
+  background-color: var(--bg-card) !important;
+  box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.15) !important;
 }
 
-.data-table tr:hover td.sticky-col {
-  background-color: var(--bg-input);
+thead th.sticky-col-1, thead th.sticky-col-2, thead th.sticky-col-3, thead th.sticky-col-4, thead th.sticky-col-5 {
+  z-index: 12 !important;
+  background-color: var(--bg-table-header) !important;
+}
+
+.data-table tr:hover td.sticky-col-1,
+.data-table tr:hover td.sticky-col-2,
+.data-table tr:hover td.sticky-col-3,
+.data-table tr:hover td.sticky-col-4,
+.data-table tr:hover td.sticky-col-5 {
+  background-color: var(--bg-input) !important;
 }
 
 /* Status Badges */
@@ -1292,5 +1339,168 @@ textarea.form-control {
 .action-btn-icon.ai-btn:hover {
   color: #8b5cf6; /* Purple for AI/Magic */
   border-color: #8b5cf6;
+}
+
+/* Master Sub-navigation Panel Styles */
+.master-nav-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.view-level-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.view-level-section .section-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+}
+
+.view-level-buttons {
+  display: flex;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.view-level-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-level-btn:hover {
+  color: var(--text-main);
+}
+
+.view-level-btn.active {
+  background-color: var(--bg-card);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* Sub-tabs styling */
+.master-subtabs-wrapper {
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.master-subtabs-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.master-subtabs {
+  display: flex;
+  gap: 24px;
+  padding-bottom: 8px;
+  white-space: nowrap;
+}
+
+.subtab-btn {
+  background: transparent;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 8px 4px 12px 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.subtab-btn i {
+  font-size: 0.88rem;
+}
+
+.subtab-btn:hover {
+  color: var(--text-main);
+}
+
+.subtab-btn.active {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.subtab-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: -9px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: var(--danger);
+  border-radius: 2px 2px 0 0;
+}
+
+/* WBS Tree Styles in Master Table */
+.wbs-row-style {
+  background-color: #f1f5f9 !important; /* Xám nhạt dịu mát tinh tế */
+  border-bottom: 2px solid #cbd5e1 !important;
+}
+
+.wbs-row-style td {
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+.wbs-row-style .sticky-col-1,
+.wbs-row-style .sticky-col-2,
+.wbs-row-style .sticky-col-3,
+.wbs-row-style .sticky-col-4,
+.wbs-row-style .sticky-col-5 {
+  background-color: #f1f5f9 !important;
+}
+
+.wbs-level2-row {
+  background-color: #ffffff !important;
+}
+
+.wbs-level3-row {
+  background-color: #fafaf9 !important; /* Hơi kem nhẹ tinh tế */
+}
+
+.toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--primary) !important;
+  color: white !important;
+  margin-right: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.toggle-btn:hover {
+  background-color: #2563eb !important;
+  transform: scale(1.1);
 }
 
